@@ -9,11 +9,6 @@ import { LeaveRequest, Employee } from '@/lib/types'
 import { LeaveCard } from '@/components/ui/LeaveCard'
 import { EmptyState, LoadingSpinner, SectionHeader } from '@/components/ui'
 
-// AL_TOTAL and MC_TOTAL are the default entitlements shown in the progress bar.
-// Admin can override per-employee, so we derive "total" from balance + used days from history.
-const AL_DEFAULT = 14
-const MC_DEFAULT = 14
-
 export default function DashboardHome() {
   const { employee, logout } = useAuth()
   const router = useRouter()
@@ -38,16 +33,15 @@ export default function DashboardHome() {
   const pending = leaves.filter(l => l.status === 'Pending').length
   const recent = leaves.slice(0, 3)
 
-  // Compute used days from approved leaves for accurate progress
+  // Compute used days from approved leaves
   const approved = leaves.filter(l => l.status === 'Approved')
-  const alUsed = approved.filter(l => l.leave_type === 'AL' || l.leave_type === 'EL')
-    .reduce((s, l) => s + l.days_count, 0)
-  const mcUsed = approved.filter(l => l.leave_type === 'MC')
-    .reduce((s, l) => s + l.days_count, 0)
-  const elUsed = approved.filter(l => l.leave_type === 'EL')
-    .reduce((s, l) => s + l.days_count, 0)
+  const alUsed = approved.filter(l => l.leave_type === 'AL').reduce((s, l) => s + l.days_count, 0)
+  const elUsed = approved.filter(l => l.leave_type === 'EL').reduce((s, l) => s + l.days_count, 0)
+  const mcUsed = approved.filter(l => l.leave_type === 'MC').reduce((s, l) => s + l.days_count, 0)
+  const replUsed = approved.filter(l => l.leave_type === 'Replacement').reduce((s, l) => s + l.days_count, 0)
 
   const alTotal = emp.al_balance + alUsed
+  const elTotal = emp.el_balance + elUsed
   const mcTotal = emp.mc_balance + mcUsed
 
   return (
@@ -65,7 +59,6 @@ export default function DashboardHome() {
         </button>
       </div>
 
-      {/* Pending notice */}
       {pending > 0 && (
         <div style={{ margin: '16px 20px 0', padding: '10px 14px', background: '#2a2000', border: '1px solid #3d3000', borderRadius: 12, display: 'flex', alignItems: 'center', gap: 10 }}>
           <span style={{ fontSize: 18 }}>⏳</span>
@@ -75,64 +68,24 @@ export default function DashboardHome() {
         </div>
       )}
 
-      {/* Leave balances */}
+      {/* Balance cards */}
       <div style={{ padding: '20px 20px 0' }}>
         <SectionHeader title="Leave Balance" />
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+          <BalanceCard type="AL" label="Annual" balance={emp.al_balance} used={alUsed} total={alTotal} />
+          <BalanceCard type="EL" label="Emergency/Compassionate" balance={emp.el_balance} used={elUsed} total={elTotal} />
+          <BalanceCard type="MC" label="Medical" balance={emp.mc_balance} used={mcUsed} total={mcTotal} />
+          <BalanceCard type="Replacement" label="Replacement" balance={emp.replacement_balance} used={replUsed} total={emp.replacement_balance + replUsed} noBar={emp.replacement_balance === 0 && replUsed === 0} />
+        </div>
 
-          {/* AL card — spans full width, notes EL shares this pool */}
-          <div className="card" style={{ padding: 16 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
-              <div>
-                <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
-                  <span className="pill-AL" style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 20 }}>AL</span>
-                  <span className="pill-EL" style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 20 }}>EL</span>
-                </div>
-                <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: '4px 0 0' }}>Annual · Emergency</p>
-                <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: '2px 0 0', fontStyle: 'italic' }}>
-                  EL shares the Annual Leave pool
-                </p>
-              </div>
-              <div style={{ textAlign: 'right' }}>
-                <p className="mono" style={{ fontSize: 28, fontWeight: 700, color: 'var(--accent)', margin: 0, lineHeight: 1 }}>{emp.al_balance}</p>
-                <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: '2px 0 0' }}>days left</p>
-              </div>
-            </div>
-            <div style={{ height: 5, background: 'var(--border)', borderRadius: 3, overflow: 'hidden', marginBottom: 6 }}>
-              <div style={{ height: '100%', width: `${Math.min(100, Math.round((emp.al_balance / alTotal) * 100))}%`, background: 'var(--accent)', borderRadius: 3, transition: 'width 0.5s ease' }} />
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: 0 }}>{alUsed} used / {alTotal} total</p>
-              {elUsed > 0 && <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: 0 }}>incl. {elUsed}d EL</p>}
-            </div>
-          </div>
-
-          {/* MC + Apply button row */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-            <div className="card" style={{ padding: 16 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
-                <div>
-                  <span className="pill-MC" style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 20 }}>MC</span>
-                  <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: '4px 0 0' }}>Medical</p>
-                </div>
-                <p className="mono" style={{ fontSize: 22, fontWeight: 700, color: 'var(--accent)', margin: 0 }}>{emp.mc_balance}</p>
-              </div>
-              <div style={{ height: 4, background: 'var(--border)', borderRadius: 2, overflow: 'hidden' }}>
-                <div style={{ height: '100%', width: `${Math.min(100, Math.round((emp.mc_balance / mcTotal) * 100))}%`, background: 'var(--accent)', borderRadius: 2, transition: 'width 0.5s ease' }} />
-              </div>
-              <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: '6px 0 0' }}>{mcUsed} used / {mcTotal} total</p>
-            </div>
-
-            <div className="card" style={{ padding: 16, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', cursor: 'pointer', gap: 6, borderStyle: 'dashed' }}
-              onClick={() => router.push('/dashboard/apply')}>
-              <span style={{ fontSize: 24 }}>➕</span>
-              <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--accent)' }}>Apply Leave</span>
-            </div>
-          </div>
+        <div className="card" style={{ marginTop: 10, padding: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', gap: 8, borderStyle: 'dashed' }}
+          onClick={() => router.push('/dashboard/apply')}>
+          <span style={{ fontSize: 22 }}>➕</span>
+          <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--accent)' }}>Apply Leave</span>
         </div>
       </div>
 
-      {/* Recent requests */}
+      {/* Recent */}
       <div style={{ padding: '24px 20px 0' }}>
         <SectionHeader title="Recent Requests"
           action={
@@ -150,6 +103,32 @@ export default function DashboardHome() {
           </div>
         )}
       </div>
+    </div>
+  )
+}
+
+function BalanceCard({ type, label, balance, used, total, noBar }: {
+  type: string; label: string; balance: number; used: number; total: number; noBar?: boolean
+}) {
+  const pct = total > 0 ? Math.min(100, Math.round((balance / total) * 100)) : 0
+  return (
+    <div className="card" style={{ padding: 16 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
+        <div>
+          <span className={`pill-${type}`} style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 20 }}>{type}</span>
+          <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: '4px 0 0', lineHeight: 1.3 }}>{label}</p>
+        </div>
+        <p className="mono" style={{ fontSize: 22, fontWeight: 700, color: balance > 0 ? 'var(--accent)' : 'var(--text-muted)', margin: 0 }}>{balance}</p>
+      </div>
+      {!noBar && (
+        <>
+          <div style={{ height: 4, background: 'var(--border)', borderRadius: 2, overflow: 'hidden' }}>
+            <div style={{ height: '100%', width: `${pct}%`, background: 'var(--accent)', borderRadius: 2, transition: 'width 0.5s ease' }} />
+          </div>
+          <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: '6px 0 0' }}>{used} used / {total} total</p>
+        </>
+      )}
+      {noBar && <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: 0, fontStyle: 'italic' }}>No credits yet</p>}
     </div>
   )
 }
