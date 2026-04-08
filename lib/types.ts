@@ -1,4 +1,4 @@
-export type LeaveType = 'AL' | 'EL' | 'MC' | 'Others'
+export type LeaveType = 'AL' | 'EL' | 'MC' | 'Replacement' | 'Others'
 export type LeaveStatus = 'Pending' | 'Approved' | 'Rejected'
 
 export interface Employee {
@@ -8,8 +8,9 @@ export interface Employee {
   department: string
   position: string
   al_balance: number
-  // EL has no separate allocation — it deducts from al_balance
+  el_balance: number      // Emergency + Compassionate combined (5 days)
   mc_balance: number
+  replacement_balance: number  // earned from working on public holidays
   created_at: string
   updated_at: string
 }
@@ -18,6 +19,7 @@ export interface LeaveRequest {
   id: string
   employee_id: string
   leave_type: LeaveType
+  leave_other_type: string | null  // filled when leave_type = 'Others'
   start_date: string
   end_date: string
   days_count: number
@@ -30,20 +32,29 @@ export interface LeaveRequest {
   employee?: Employee
 }
 
-export interface LeaveBalance {
-  AL: number // EL shares this pool
-  MC: number
+export interface ReplacementCredit {
+  id: string
+  employee_id: string
+  work_date: string        // date staff worked (public holiday)
+  public_holiday: string  // name of the holiday
+  days_credited: number
+  note: string | null
+  created_at: string
+  employee?: Employee
 }
 
 export const LEAVE_LABELS: Record<LeaveType, string> = {
   AL: 'Annual Leave',
-  EL: 'Emergency Leave',
+  EL: 'Emergency / Compassionate',
   MC: 'Medical Leave',
+  Replacement: 'Replacement Leave',
   Others: 'Others',
 }
 
-export const STATUS_COLORS: Record<LeaveStatus, string> = {
-  Pending: 'text-amber-600 bg-amber-50 border-amber-200',
-  Approved: 'text-green-700 bg-green-50 border-green-200',
-  Rejected: 'text-red-600 bg-red-50 border-red-200',
+export const LEAVE_DESCRIPTIONS: Record<LeaveType, string> = {
+  AL: 'Planned time off',
+  EL: 'Emergency or bereavement',
+  MC: 'Medical certificate required',
+  Replacement: 'Worked on public holiday',
+  Others: 'Unpaid, study leave, etc.',
 }
