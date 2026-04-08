@@ -2,7 +2,7 @@
 
 import { LeaveRequest, LEAVE_LABELS } from '@/lib/types'
 import { COMPANY } from '@/lib/company-config'
-import { formatDateRange, formatDate } from '@/lib/utils'
+import { formatDate } from '@/lib/utils'
 
 interface LeaveSlipProps {
   request: LeaveRequest
@@ -17,145 +17,129 @@ export function LeaveSlip({ request, onClose }: LeaveSlipProps) {
   const generatedDate = new Date().toLocaleDateString('en-MY', {
     day: 'numeric', month: 'long', year: 'numeric'
   })
-
   const leaveLabel = request.leave_type === 'Others' && request.leave_other_type
     ? request.leave_other_type
     : LEAVE_LABELS[request.leave_type]
 
   return (
     <>
-      {/* Print styles — only shows slip, hides everything else */}
       <style>{`
         @media print {
           body * { visibility: hidden !important; }
-          #leave-slip, #leave-slip * { visibility: visible !important; }
-          #leave-slip {
+          #leave-slip-doc, #leave-slip-doc * { visibility: visible !important; }
+          #leave-slip-doc {
             position: fixed !important;
             inset: 0 !important;
             background: white !important;
-            padding: 32px !important;
+            padding: 16mm !important;
             z-index: 9999 !important;
+            display: block !important;
           }
           .no-print { display: none !important; }
         }
-        @page { size: A4; margin: 20mm; }
+        @page { size: A4 portrait; margin: 0; }
       `}</style>
 
       {/* Backdrop */}
       <div className="no-print" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', zIndex: 200 }}
         onClick={onClose} />
 
-      {/* Slip container */}
-      <div id="leave-slip" style={{
-        position: 'fixed', inset: 0, zIndex: 201, overflowY: 'auto',
-        display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '20px 16px 40px',
-      }}>
-        <div style={{
-          background: 'white', borderRadius: 16, width: '100%', maxWidth: 520,
-          boxShadow: '0 24px 80px rgba(0,0,0,0.4)', overflow: 'hidden',
-          fontFamily: 'Georgia, serif', color: '#1a1a1a',
+      {/* Scroll wrapper */}
+      <div style={{ position: 'fixed', inset: 0, zIndex: 201, overflowY: 'auto', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '20px 16px 60px' }}>
+
+        {/* A4 slip */}
+        <div id="leave-slip-doc" style={{
+          background: 'white', width: '100%', maxWidth: 560,
+          border: '1px solid #ddd', borderRadius: 8,
+          fontFamily: 'Arial, sans-serif', color: '#1a1a1a', fontSize: 12,
         }}>
 
-          {/* Header */}
-          <div style={{ background: '#111', padding: '24px 28px', textAlign: 'center' }}>
+          {/* Header — no background, just border bottom */}
+          <div style={{ padding: '18px 24px 14px', borderBottom: '2px solid #D7DF23', display: 'flex', alignItems: 'center', gap: 12 }}>
             {COMPANY.logoPath ? (
-              <img src={COMPANY.logoPath} alt="Logo" style={{ height: 48, marginBottom: 10, objectFit: 'contain' }} />
+              <img src={COMPANY.logoPath} alt="Logo" style={{ height: 40, objectFit: 'contain', flexShrink: 0 }} />
             ) : (
-              <div style={{ width: 48, height: 48, background: '#D7DF23', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 10px', fontSize: 22 }}>
+              <div style={{ width: 40, height: 40, border: '1.5px solid #D7DF23', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>
                 📋
               </div>
             )}
-            <h1 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: 'white', fontFamily: 'Georgia, serif' }}>
-              {COMPANY.name}
-            </h1>
-            {COMPANY.tagline && (
-              <p style={{ margin: '4px 0 0', fontSize: 12, color: '#999', fontFamily: 'Georgia, serif' }}>{COMPANY.tagline}</p>
-            )}
-          </div>
-
-          {/* Slip title bar */}
-          <div style={{ background: '#D7DF23', padding: '10px 28px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: 14, fontWeight: 700, color: '#111', letterSpacing: '1px', textTransform: 'uppercase' }}>
-              Leave Approval Slip
-            </span>
-            <span style={{ fontSize: 11, color: '#555', fontFamily: 'monospace' }}>{slipNumber}</span>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 15, fontWeight: 700, color: '#111' }}>{COMPANY.name}</div>
+              {COMPANY.tagline && <div style={{ fontSize: 10, color: '#888', marginTop: 1 }}>{COMPANY.tagline}</div>}
+            </div>
+            <div style={{ textAlign: 'right', flexShrink: 0 }}>
+              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', color: '#555' }}>Leave Approval Slip</div>
+              <div style={{ fontSize: 10, fontFamily: 'monospace', color: '#888', marginTop: 2 }}>{slipNumber}</div>
+            </div>
           </div>
 
           {/* Body */}
-          <div style={{ padding: '24px 28px' }}>
+          <div style={{ padding: '16px 24px 20px' }}>
 
-            {/* Status badge */}
-            <div style={{ textAlign: 'center', marginBottom: 24 }}>
-              <span style={{
-                display: 'inline-block', padding: '6px 20px', borderRadius: 20,
-                background: '#e8faf0', border: '1.5px solid #22c55e',
-                fontSize: 13, fontWeight: 700, color: '#15803d', letterSpacing: '0.5px'
-              }}>
+            {/* Approved badge */}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 14 }}>
+              <span style={{ background: '#e8faf0', border: '1.5px solid #22c55e', color: '#15803d', fontSize: 10, fontWeight: 700, padding: '3px 12px', borderRadius: 20, letterSpacing: '0.5px' }}>
                 ✓ APPROVED
               </span>
             </div>
 
-            {/* Employee details */}
-            <Section title="Employee Details">
-              <Row label="Full Name" value={emp?.name ?? '—'} bold />
-              <Row label="Position" value={emp?.position ?? '—'} />
-              <Row label="Department" value={emp?.department ?? '—'} />
-              <Row label="Email" value={emp?.email ?? '—'} />
-            </Section>
+            {/* 2-column grid */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', border: '1px solid #e0e0e0', borderRadius: 6, overflow: 'hidden', marginBottom: 12 }}>
 
-            <Divider />
+              {/* Employee */}
+              <div style={{ padding: '12px 14px', borderRight: '1px solid #e0e0e0' }}>
+                <div style={{ fontSize: 9, fontWeight: 700, color: '#888', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: 10 }}>Employee</div>
+                <Field label="Full Name" value={emp?.name ?? '—'} bold />
+                <Field label="Position" value={emp?.position ?? '—'} />
+                <Field label="Department" value={emp?.department ?? '—'} />
+                <Field label="Email" value={emp?.email ?? '—'} small />
+              </div>
 
-            {/* Leave details */}
-            <Section title="Leave Details">
-              <Row label="Leave Type" value={leaveLabel} bold />
-              <Row label="Duration" value={`${request.days_count} working day${request.days_count !== 1 ? 's' : ''}`} accent />
-              <Row label="Start Date" value={new Date(request.start_date).toLocaleDateString('en-MY', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })} />
-              <Row label="End Date" value={new Date(request.end_date).toLocaleDateString('en-MY', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })} />
-              {request.reason && <Row label="Reason" value={request.reason} />}
-            </Section>
+              {/* Leave details */}
+              <div style={{ padding: '12px 14px' }}>
+                <div style={{ fontSize: 9, fontWeight: 700, color: '#888', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: 10 }}>Leave Details</div>
+                <Field label="Leave Type" value={leaveLabel} bold />
+                <Field label="Duration" value={`${request.days_count} working day${request.days_count !== 1 ? 's' : ''}`} accent />
+                <Field label="Start Date" value={new Date(request.start_date).toLocaleDateString('en-MY', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })} />
+                <Field label="End Date" value={new Date(request.end_date).toLocaleDateString('en-MY', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })} />
+              </div>
+            </div>
 
-            {request.admin_note && (
-              <>
-                <Divider />
-                <Section title="Admin Note">
-                  <p style={{ margin: 0, fontSize: 13, color: '#444', lineHeight: 1.6, fontStyle: 'italic' }}>
-                    "{request.admin_note}"
-                  </p>
-                </Section>
-              </>
+            {/* Reason */}
+            {request.reason && (
+              <div style={{ border: '1px solid #e0e0e0', borderRadius: 6, padding: '10px 14px', marginBottom: 12 }}>
+                <div style={{ fontSize: 9, color: '#aaa', marginBottom: 4 }}>Reason</div>
+                <div style={{ fontSize: 12, color: '#333' }}>{request.reason}</div>
+              </div>
             )}
 
-            <Divider />
+            {/* Admin note */}
+            {request.admin_note && (
+              <div style={{ border: '1px solid #e0e0e0', borderRadius: 6, padding: '10px 14px', marginBottom: 12 }}>
+                <div style={{ fontSize: 9, color: '#aaa', marginBottom: 4 }}>Admin Note</div>
+                <div style={{ fontSize: 12, color: '#333', fontStyle: 'italic' }}>{request.admin_note}</div>
+              </div>
+            )}
 
-            {/* Generated info */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <p style={{ margin: 0, fontSize: 11, color: '#888' }}>Date Generated</p>
-                <p style={{ margin: '2px 0 0', fontSize: 13, color: '#444' }}>{generatedDate}</p>
-              </div>
-              <div style={{ textAlign: 'right' }}>
-                <p style={{ margin: 0, fontSize: 11, color: '#888' }}>Submitted</p>
-                <p style={{ margin: '2px 0 0', fontSize: 13, color: '#444' }}>{formatDate(request.created_at.split('T')[0])}</p>
-              </div>
+            {/* Bottom info row */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
+              <InfoBox label="Reference No." value={slipNumber} mono />
+              <InfoBox label="Submitted" value={formatDate(request.created_at.split('T')[0])} />
+              <InfoBox label="Generated" value={generatedDate} />
             </div>
           </div>
 
           {/* Footer */}
-          <div style={{ background: '#f8f8f8', borderTop: '1px solid #eee', padding: '14px 28px', textAlign: 'center' }}>
-            <p style={{ margin: 0, fontSize: 11, color: '#888', lineHeight: 1.6 }}>
-              {COMPANY.address}<br />
-              {COMPANY.phone} · {COMPANY.email}
-            </p>
-            <p style={{ margin: '8px 0 0', fontSize: 10, color: '#bbb' }}>
-              This is a system-generated document. No signature required.
-            </p>
+          <div style={{ borderTop: '1px solid #eee', padding: '10px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ fontSize: 9, color: '#aaa' }}>{COMPANY.email} · {COMPANY.phone}</div>
+            <div style={{ fontSize: 9, color: '#ccc' }}>System generated · No signature required</div>
           </div>
 
-          {/* Action buttons — hidden on print */}
-          <div className="no-print" style={{ padding: '16px 28px 20px', display: 'flex', gap: 10 }}>
+          {/* Print/Close buttons — hidden on print */}
+          <div className="no-print" style={{ borderTop: '1px solid #eee', padding: '14px 24px', display: 'flex', gap: 10 }}>
             <button onClick={onClose} className="btn-ghost" style={{ flex: 1 }}>Close</button>
             <button onClick={handlePrint}
-              style={{ flex: 2, background: '#D7DF23', border: 'none', borderRadius: 12, padding: '13px', color: '#111', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', fontSize: 15 }}>
+              style={{ flex: 2, background: '#D7DF23', border: 'none', borderRadius: 12, padding: 13, color: '#111', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', fontSize: 14 }}>
               🖨 Print / Save PDF
             </button>
           </div>
@@ -165,35 +149,30 @@ export function LeaveSlip({ request, onClose }: LeaveSlipProps) {
   )
 }
 
-// ─── Sub-components ───────────────────────────────────────────
-
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Field({ label, value, bold, accent, small }: {
+  label: string; value: string; bold?: boolean; accent?: boolean; small?: boolean
+}) {
   return (
-    <div style={{ marginBottom: 4 }}>
-      <p style={{ margin: '0 0 10px', fontSize: 11, fontWeight: 700, color: '#888', textTransform: 'uppercase', letterSpacing: '1px', fontFamily: 'Georgia, serif' }}>
-        {title}
-      </p>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>{children}</div>
-    </div>
-  )
-}
-
-function Row({ label, value, bold, accent }: { label: string; value: string; bold?: boolean; accent?: boolean }) {
-  return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16 }}>
-      <span style={{ fontSize: 12, color: '#888', flexShrink: 0, minWidth: 100 }}>{label}</span>
-      <span style={{
-        fontSize: 13, textAlign: 'right',
+    <div style={{ marginBottom: 7 }}>
+      <div style={{ fontSize: 9, color: '#aaa' }}>{label}</div>
+      <div style={{
+        fontSize: small ? 10 : 12, marginTop: 1,
         fontWeight: bold ? 700 : 400,
         color: accent ? '#b8a000' : '#1a1a1a',
-        fontFamily: accent ? 'monospace' : 'Georgia, serif',
+        fontFamily: accent ? 'monospace' : 'Arial, sans-serif',
+        wordBreak: 'break-all',
       }}>
         {value}
-      </span>
+      </div>
     </div>
   )
 }
 
-function Divider() {
-  return <div style={{ height: 1, background: '#eee', margin: '16px 0' }} />
+function InfoBox({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
+  return (
+    <div style={{ background: '#f8f8f8', border: '1px solid #eee', borderRadius: 6, padding: '8px 10px' }}>
+      <div style={{ fontSize: 9, color: '#aaa' }}>{label}</div>
+      <div style={{ fontSize: mono ? 10 : 11, marginTop: 2, fontFamily: mono ? 'monospace' : 'Arial, sans-serif', color: '#333' }}>{value}</div>
+    </div>
+  )
 }
