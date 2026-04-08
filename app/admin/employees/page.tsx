@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { getEmployees, deleteEmployee } from '@/lib/api/employees'
 import { Employee } from '@/lib/types'
-import { EmptyState, LoadingSpinner, PageHeader } from '@/components/ui'
+import { EmptyState, LoadingSpinner } from '@/components/ui'
 
 export default function AdminEmployeesPage() {
   const router = useRouter()
@@ -13,11 +13,7 @@ export default function AdminEmployeesPage() {
   const [search, setSearch] = useState('')
   const [deleting, setDeleting] = useState<string | null>(null)
 
-  const load = () => {
-    getEmployees().then(setEmployees).finally(() => setLoading(false))
-  }
-
-  useEffect(() => { load() }, [])
+  useEffect(() => { getEmployees().then(setEmployees).finally(() => setLoading(false)) }, [])
 
   const filtered = employees.filter(e =>
     e.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -31,9 +27,7 @@ export default function AdminEmployeesPage() {
     try {
       await deleteEmployee(emp.id)
       setEmployees(prev => prev.filter(e => e.id !== emp.id))
-    } finally {
-      setDeleting(null)
-    }
+    } finally { setDeleting(null) }
   }
 
   return (
@@ -51,7 +45,7 @@ export default function AdminEmployeesPage() {
 
       <div style={{ padding: '16px 20px 0' }}>
         <input className="input" placeholder="Search by name, email, department…"
-          value={search} onChange={(e) => setSearch(e.target.value)} />
+          value={search} onChange={e => setSearch(e.target.value)} />
       </div>
 
       <div style={{ padding: '16px 20px 0' }}>
@@ -77,7 +71,6 @@ function EmployeeRow({ employee: e, onEdit, onDelete, deleting }: {
   employee: Employee; onEdit: () => void; onDelete: () => void; deleting: boolean
 }) {
   const initials = e.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
-
   return (
     <div className="card" style={{ padding: 16 }}>
       <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
@@ -87,19 +80,16 @@ function EmployeeRow({ employee: e, onEdit, onDelete, deleting }: {
         <div style={{ flex: 1, minWidth: 0 }}>
           <p style={{ fontSize: 15, fontWeight: 600, margin: '0 0 2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.name}</p>
           <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: '0 0 8px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.position} · {e.department}</p>
-          {/* AL/EL combined, MC separate */}
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-            <BalanceChip label="AL+EL" value={e.al_balance} />
-            <BalanceChip label="MC" value={e.mc_balance} />
+            <Chip label="AL" value={e.al_balance} />
+            <Chip label="EL" value={e.el_balance} />
+            <Chip label="MC" value={e.mc_balance} />
+            {e.replacement_balance > 0 && <Chip label="RL" value={e.replacement_balance} highlight />}
           </div>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flexShrink: 0 }}>
-          <button onClick={onEdit}
-            style={{ background: 'var(--bg-card2)', border: '1px solid var(--border)', borderRadius: 8, padding: '6px 12px', color: 'var(--text-soft)', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}>
-            Edit
-          </button>
-          <button onClick={onDelete} disabled={deleting}
-            style={{ background: 'transparent', border: '1px solid var(--danger)', borderRadius: 8, padding: '6px 12px', color: 'var(--danger)', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit', opacity: deleting ? 0.5 : 1 }}>
+          <button onClick={onEdit} style={{ background: 'var(--bg-card2)', border: '1px solid var(--border)', borderRadius: 8, padding: '6px 12px', color: 'var(--text-soft)', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}>Edit</button>
+          <button onClick={onDelete} disabled={deleting} style={{ background: 'transparent', border: '1px solid var(--danger)', borderRadius: 8, padding: '6px 12px', color: 'var(--danger)', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit', opacity: deleting ? 0.5 : 1 }}>
             {deleting ? '…' : 'Remove'}
           </button>
         </div>
@@ -108,10 +98,10 @@ function EmployeeRow({ employee: e, onEdit, onDelete, deleting }: {
   )
 }
 
-function BalanceChip({ label, value }: { label: string; value: number }) {
+function Chip({ label, value, highlight }: { label: string; value: number; highlight?: boolean }) {
   return (
-    <span style={{ fontSize: 11, padding: '3px 8px', borderRadius: 20, background: 'var(--bg-card2)', border: '1px solid var(--border)', color: 'var(--text-soft)', fontWeight: 600 }}>
-      {label}: <span className="mono" style={{ color: 'var(--accent)' }}>{value}</span>
+    <span style={{ fontSize: 11, padding: '3px 8px', borderRadius: 20, background: 'var(--bg-card2)', border: `1px solid ${highlight ? 'var(--accent)' : 'var(--border)'}`, color: 'var(--text-soft)', fontWeight: 600 }}>
+      {label}: <span className="mono" style={{ color: highlight ? 'var(--accent)' : 'var(--accent)' }}>{value}</span>
     </span>
   )
 }
