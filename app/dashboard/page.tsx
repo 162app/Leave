@@ -50,7 +50,7 @@ export default function DashboardHome() {
       <div style={{ padding: '20px 20px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div>
           <p style={{ color: 'var(--text-muted)', fontSize: 13, margin: '0 0 2px' }}>Good day,</p>
-          <h1 style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-0.3px', margin: 0 }}>{emp.name.split(' ')[0]} 👋</h1>
+          <h1 style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-0.3px', margin: 0 }}>{emp.name} 👋</h1>
           <p style={{ color: 'var(--text-muted)', fontSize: 12, margin: '4px 0 0' }}>{emp.position} · {emp.department}</p>
         </div>
         <button onClick={() => { logout(); router.push('/') }}
