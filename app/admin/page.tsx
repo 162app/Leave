@@ -3,20 +3,26 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/auth-context'
+import { getLeaveRequests } from '@/lib/api/leave'
 import { getEmployees } from '@/lib/api/employees'
 import { getReplacementCredits, addReplacementCredit, deleteReplacementCredit } from '@/lib/api/replacements'
-import { Employee, ReplacementCredit } from '@/lib/types'
+import { LeaveRequest, Employee, ReplacementCredit } from '@/lib/types'
+import { LeaveCard } from '@/components/ui/LeaveCard'
 import { EmptyState, LoadingSpinner, SectionHeader } from '@/components/ui'
 import { formatDate } from '@/lib/utils'
+
+const PAGE_SIZE = 10
 
 export default function AdminDashboard() {
   const { logout } = useAuth()
   const router = useRouter()
+  const [pending, setPending] = useState<LeaveRequest[]>([])
   const [employees, setEmployees] = useState<Employee[]>([])
   const [credits, setCredits] = useState<ReplacementCredit[]>([])
   const [loading, setLoading] = useState(true)
+  const [page, setPage] = useState(1)
 
-  // Add credit form state
+  // Add credit form
   const [showCreditForm, setShowCreditForm] = useState(false)
   const [creditForm, setCreditForm] = useState({
     employee_id: '', work_date: '', public_holiday: '', days_credited: 1, note: ''
@@ -25,12 +31,19 @@ export default function AdminDashboard() {
   const [creditError, setCreditError] = useState('')
 
   const load = async () => {
-    const [e, c] = await Promise.all([getEmployees(), getReplacementCredits()])
-    setEmployees(e); setCredits(c)
+    const [leaves, e, c] = await Promise.all([
+      getLeaveRequests({ status: 'Pending' }),
+      getEmployees(),
+      getReplacementCredits(),
+    ])
+    setPending(leaves); setEmployees(e); setCredits(c)
     setLoading(false)
   }
 
   useEffect(() => { load() }, [])
+
+  const totalPages = Math.ceil(pending.length / PAGE_SIZE)
+  const paginated = pending.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
   const handleAddCredit = async () => {
     if (!creditForm.employee_id || !creditForm.work_date || !creditForm.public_holiday) {
@@ -65,6 +78,47 @@ export default function AdminDashboard() {
           style={{ background: 'var(--bg-card2)', border: '1px solid var(--border)', borderRadius: 10, padding: '8px 14px', color: 'var(--text-muted)', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' }}>
           Sign out
         </button>
+      </div>
+
+      {/* Pending Approval */}
+      <div style={{ padding: '24px 20px 0' }}>
+        <SectionHeader title={`Pending Approval${pending.length > 0 ? ` (${pending.length})` : ''}`}
+          action={
+            <button onClick={() => router.push('/admin/leaves?filter=Pending')}
+              style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600 }}>
+              View all →
+            </button>
+          }
+        />
+
+        {loading ? <LoadingSpinner /> : pending.length === 0 ? (
+          <EmptyState icon="✅" title="All clear!" subtitle="No pending leave requests" />
+        ) : (
+          <>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {paginated.map(leave => (
+                <LeaveCard key={leave.id} request={leave} showEmployee
+                  onClick={() => router.push(`/admin/leaves?id=${leave.id}`)} />
+              ))}
+            </div>
+
+            {totalPages > 1 && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 16, padding: '0 4px' }}>
+                <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
+                  className="btn-ghost" style={{ padding: '9px 16px', opacity: page === 1 ? 0.4 : 1 }}>
+                  ← Prev
+                </button>
+                <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>
+                  Page {page} of {totalPages}
+                </span>
+                <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
+                  className="btn-ghost" style={{ padding: '9px 16px', opacity: page === totalPages ? 0.4 : 1 }}>
+                  Next →
+                </button>
+              </div>
+            )}
+          </>
+        )}
       </div>
 
       {/* Replacement Credits */}
@@ -122,7 +176,7 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {loading ? <LoadingSpinner /> : credits.length === 0 ? (
+        {loading ? null : credits.length === 0 ? (
           <EmptyState icon="🔄" title="No replacement credits" subtitle="Add a credit when staff works on a public holiday" />
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
