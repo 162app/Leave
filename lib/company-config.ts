@@ -8,7 +8,7 @@ export const COMPANY = {
   name: '162 Residency Selayang',
 
   // Optional tagline shown below company name
-  tagline: 'Your Tagline Here',
+  tagline: 'Leave Application',
 
   // Leave this as-is if you don't have a logo.
   // To add a logo: place your image in /public/logo.png
