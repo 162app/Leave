@@ -44,10 +44,7 @@ export function LeaveSlip({ request, onClose }: LeaveSlipProps) {
           <span style={{ fontSize: 22 }}>📄</span>
           <h2 style={{ fontSize: 17, fontWeight: 700, margin: 0 }}>Leave Slip</h2>
         </div>
-        <p style={{ color: 'var(--text-muted)', fontSize: 13, margin: '0 0 20px' }}>
-          PDF akan dibuka dalam tab baru. Dari sana boleh save atau share.
-        </p>
-
+        
         {/* Summary */}
         <div style={{ background: 'var(--bg-card2)', borderRadius: 12, padding: '14px 16px', marginBottom: 20 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
