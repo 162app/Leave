@@ -4,7 +4,9 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── Dark mode (default) ───────────────────────────────── */
 :root {
+  color-scheme: light dark;
   --accent: #D7DF23;
   --accent-dark: #b8c400;
   --accent-light: #eef29a;
@@ -18,6 +20,25 @@
   --danger: #ff4d6d;
   --success: #22c55e;
   --warning: #f59e0b;
+}
+
+/* ── Light mode (follows system) ──────────────────────── */
+@media (prefers-color-scheme: light) {
+  :root {
+    --accent: #9aa800;
+    --accent-dark: #7d8a00;
+    --accent-light: #f0f4a0;
+    --bg: #f4f5f0;
+    --bg-card: #ffffff;
+    --bg-card2: #f0f1eb;
+    --border: #dddeda;
+    --text: #1a1c14;
+    --text-muted: #6b6e5a;
+    --text-soft: #4a4d3a;
+    --danger: #d4002a;
+    --success: #16a34a;
+    --warning: #d97706;
+  }
 }
 
 * { box-sizing: border-box; }
@@ -40,10 +61,25 @@ html, body {
 .badge-approved { background: #002a14; color: var(--success); border: 1px solid #003d1e; }
 .badge-rejected { background: #2a0012; color: var(--danger);  border: 1px solid #3d001a; }
 
-.pill-AL     { background: #1a2a40; color: #60a5fa; border: 1px solid #1e3a5f; }
-.pill-EL     { background: #2a1a3a; color: #c084fc; border: 1px solid #3d2a52; }
-.pill-MC     { background: #0a2a1a; color: #4ade80; border: 1px solid #0f3d26; }
-.pill-Others { background: #2a2010; color: #fbbf24; border: 1px solid #3d3018; }
+@media (prefers-color-scheme: light) {
+  .badge-pending  { background: #fef9e7; color: #92610a; border: 1px solid #f5d97a; }
+  .badge-approved { background: #e8faf0; color: #15803d; border: 1px solid #86efac; }
+  .badge-rejected { background: #fef2f2; color: #b91c1c; border: 1px solid #fca5a5; }
+}
+
+.pill-AL          { background: #1a2a40; color: #60a5fa; border: 1px solid #1e3a5f; }
+.pill-EL          { background: #2a1a3a; color: #c084fc; border: 1px solid #3d2a52; }
+.pill-MC          { background: #0a2a1a; color: #4ade80; border: 1px solid #0f3d26; }
+.pill-Others      { background: #2a2010; color: #fbbf24; border: 1px solid #3d3018; }
+.pill-Replacement { background: #1a2a2a; color: #22d3ee; border: 1px solid #1e3a3a; }
+
+@media (prefers-color-scheme: light) {
+  .pill-AL          { background: #e6f1fb; color: #1d4ed8; border: 1px solid #93c5fd; }
+  .pill-EL          { background: #f5f0ff; color: #7c3aed; border: 1px solid #c4b5fd; }
+  .pill-MC          { background: #eaf3de; color: #166534; border: 1px solid #86efac; }
+  .pill-Others      { background: #fef9e7; color: #92610a; border: 1px solid #f5d97a; }
+  .pill-Replacement { background: #e0f9ff; color: #0e7490; border: 1px solid #67e8f9; }
+}
 
 .bottom-nav {
   position: fixed;
