@@ -71,7 +71,7 @@ export function generateSlipPDF(request: LeaveRequest): void {
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(7)
   doc.setTextColor('#15803d')
-  doc.text('✓  APPROVED', W - margin - 14, y, { align: 'center' })
+  doc.text('APPROVED', W - margin - 14, y, { align: 'center' })
 
   y += 8
 
